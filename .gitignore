@@ -20,3 +20,8 @@ data/
 
 .env
 .DS_Store
+
+# Datasets, caches and run outputs
+data/
+runs/
+weights/

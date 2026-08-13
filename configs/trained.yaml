@@ -1,0 +1,17 @@
+# Config for a model produced by the training pipeline. See docs/07-training-guide.md.
+camera_id: cam-01
+# Frame size MUST match what the model was trained on. Rescaling here changes the
+# apparent size of people, which is a domain shift the model was never shown -- see
+# the docstring in scripts/make_demo_video.py for what that costs.
+stream: {source: "0", target_fps: 10.0, width: 320, height: 240}
+ring_buffer: {seconds: 30.0}
+sampler: {clip_frames: 16, clip_span_s: 2.0, stride_s: 1.0}
+model:
+  backend: torch
+  weights: weights/model.torchscript.pt
+  classes: [normal, fight]     # MUST match weights/classes.txt, same order
+  input_size: 112
+detect:
+  default: {open_at: 0.75, close_at: 0.45, open_k: 3, open_n: 5, min_event_s: 1.5, idle_close_s: 3.0}
+alert: {webhook_url: null, cooldown_s: 120.0, outbox_dir: var/outbox}
+storage: {clip_dir: var/clips, pre_roll_s: 15.0, post_roll_s: 5.0, fps: 10.0}

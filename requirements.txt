@@ -1,14 +1,20 @@
-# Core runtime — enough to run the pipeline with the stub model on a CPU.
+# Core — enough for data prep, metrics, and the inference service.
 numpy>=1.24
 opencv-python-headless>=4.8
 PyYAML>=6.0
 requests>=2.31
 
-# Inference backends (install what your deployment needs)
-# torch>=2.1                 # torch backend
-# onnxruntime>=1.16          # onnx backend, CPU
-# onnxruntime-gpu>=1.16      # onnx backend, CUDA
-# ultralytics>=8.3           # YOLO person gate + pose-based fall detection (Phase 1)
+# Training. Install the build matching your CUDA (or the CPU wheel for testing):
+#   GPU:  pip install torch --index-url https://download.pytorch.org/whl/cu121
+#   CPU:  pip install torch --index-url https://download.pytorch.org/whl/cpu
+# torch>=2.1
+
+# Optional backbones
+# transformers>=4.40        # videomae
+# torchvision>=0.16         # r3d_18
+# onnx>=1.16                # ONNX export
+# onnxscript>=0.1           # required by torch.onnx.export on torch >= 2.5
+# onnxruntime>=1.16         # ONNX inference
 
 # Dev
 pytest>=7.4
