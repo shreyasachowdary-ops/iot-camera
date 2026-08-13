@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Runtime output — clips and spooled alerts. Never commit footage.
+var/
+*.mp4
+*.avi
+
+# Model weights and cached datasets
+weights/
+*.pt
+*.pth
+*.onnx
+*.npy
+data/
+
+.env
+.DS_Store

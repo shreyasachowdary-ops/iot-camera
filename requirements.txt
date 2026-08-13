@@ -1,0 +1,14 @@
+# Core runtime — enough to run the pipeline with the stub model on a CPU.
+numpy>=1.24
+opencv-python-headless>=4.8
+PyYAML>=6.0
+requests>=2.31
+
+# Inference backends (install what your deployment needs)
+# torch>=2.1                 # torch backend
+# onnxruntime>=1.16          # onnx backend, CPU
+# onnxruntime-gpu>=1.16      # onnx backend, CUDA
+# ultralytics>=8.3           # YOLO person gate + pose-based fall detection (Phase 1)
+
+# Dev
+pytest>=7.4

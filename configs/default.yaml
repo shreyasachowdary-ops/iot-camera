@@ -1,0 +1,87 @@
+# CCTV Sentinel — default configuration.
+#
+# Every threshold here is a STARTING POINT, not a recommendation. Tune them against
+# your own site's normal footage until false alerts are under 1/camera/day, and only
+# then measure what recall you have left. See docs/03-data-and-training.md.
+
+camera_id: cam-01
+
+stream:
+  # Use the camera's SUBSTREAM, not the main stream. The model runs at 224x224, so a
+  # 4K feed costs 8x the decode for zero accuracy.
+  #   Hikvision: rtsp://user:pass@ip:554/Streaming/Channels/102
+  #   Dahua:     rtsp://user:pass@ip:554/cam/realmonitor?channel=1&subtype=1
+  source: "0"            # "0" = default webcam, for local testing
+  target_fps: 10.0       # camera may send 25; the model does not need more than 10
+  width: 640
+  height: 360
+  reconnect_delay_s: 2.0
+  reconnect_max_delay_s: 30.0
+
+ring_buffer:
+  seconds: 30.0          # ~10 MB/camera JPEG-encoded. Constant, never grows.
+  jpeg_quality: 80
+
+motion_gate:
+  enabled: true
+  downscale_to: [160, 90]
+  pixel_delta: 25
+  min_changed_fraction: 0.004   # raise if a swaying tree/flickering light trips it
+  cooldown_frames: 20
+
+sampler:
+  clip_frames: 16        # what the video backbone expects
+  clip_span_s: 2.0
+  stride_s: 1.0          # 50% overlap: an event cannot fall between two windows
+
+model:
+  # stub  = motion-energy heuristic; no GPU, no weights. Proves the pipeline.
+  # torch = TorchScript from notebooks/train_colab.ipynb
+  # onnx  = exported model for the edge box
+  backend: stub
+  weights: null
+  classes: [normal, fight, fall]
+  input_size: 224
+  device: auto
+
+detect:
+  default:
+    open_at: 0.75        # score needed to open an event
+    close_at: 0.45       # lower than open_at on purpose — hysteresis, stops flapping
+    open_k: 3            # need 3 of the last 5 windows above open_at
+    open_n: 5
+    ema_alpha: 0.5
+    min_event_s: 1.5
+    # Load-bearing: an event closes on a LOW score, but once an incident ends the
+    # scene goes still, the motion gate stops passing frames, and no further clip is
+    # ever scored. Without this the event hangs open and the alert is NEVER sent.
+    idle_close_s: 3.0
+    max_event_s: 120.0   # hard cap for cameras whose scene never settles
+  per_class:
+    fall:
+      # A collapse is a brief event followed by stillness, so it needs to trip faster
+      # and on less sustained evidence than a fight.
+      open_at: 0.70
+      close_at: 0.40
+      open_k: 2
+      open_n: 4
+      min_event_s: 1.0
+    fight:
+      open_at: 0.80      # fights are the noisiest class — demand more evidence
+      open_k: 3
+      open_n: 5
+
+alert:
+  webhook_url: null      # e.g. https://api.example.com/hooks/cctv
+  hmac_secret: null      # set this in production; read it from the environment
+  timeout_s: 10.0
+  max_retries: 5
+  cooldown_s: 120.0      # per (camera, class) — one brawl is one alert, not forty
+  outbox_dir: var/outbox
+
+storage:
+  clip_dir: var/clips
+  pre_roll_s: 20.0       # free — those frames were already in the ring buffer
+  post_roll_s: 10.0
+  fps: 10.0
+  max_dir_bytes: 5368709120   # 5 GiB hard cap, LRU eviction
